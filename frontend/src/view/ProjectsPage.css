@@ -1,0 +1,130 @@
+/* Projects Page Styles */
+.projects-page {
+    padding: 20px;
+    background-color: #f5f5f5;
+  }
+  
+  /* Header Controls */
+  .projects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .entries-control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .entries-control select {
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .search-box input {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .add-project-btn {
+    background-color: #001f54;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  /* Table Styles */
+  .projects-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .projects-table th,
+  .projects-table td {
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .projects-table thead th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+  
+  .projects-table tbody tr:nth-child(odd) {
+    background-color: #fafafa;
+  }
+  
+  /* Status Styles */
+  .status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: white;
+    font-size: 14px;
+  }
+  
+  .status.completed {
+    background-color: #4caf50;
+  }
+  
+  .status.pending {
+    background-color: #ff9800;
+  }
+  
+  .status.canceled {
+    background-color: #f44336;
+  }
+  
+  /* Action Buttons */
+  .edit-btn,
+  .delete-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .edit-btn {
+    background-color: #3f51b5;
+    color: white;
+  }
+  
+  .delete-btn {
+    background-color: #e53935;
+    color: white;
+  }
+  
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 5px;
+  }
+  
+  .pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: white;
+    cursor: pointer;
+  }
+  
+  .pagination .active {
+    background-color: #001f54;
+    color: white;
+  }
+  

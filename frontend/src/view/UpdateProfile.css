@@ -1,0 +1,101 @@
+body   
+  .edit-profile-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .logout-btn {
+    background-color: #001f54;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  /* Profile Container */
+  .profile-container {
+    display: flex;
+    flex: 1;
+    margin: 20px;
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    background-color: #2c2c2c;
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 250px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  
+  .sidebar h2 {
+    margin-bottom: 20px;
+    font-size: 20px;
+  }
+  
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .edit-profile-btn,
+  .logout-btn {
+    background-color: #ccc;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  
+  /* Main Content */
+  .edit-profile-content {
+    flex: 1;
+    margin-left: 20px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .edit-profile-content h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .edit-profile-form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .edit-profile-form input[type="text"],
+  .edit-profile-form input[type="email"],
+  .edit-profile-form input[type="file"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .update-btn {
+    background-color: #ccc;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
