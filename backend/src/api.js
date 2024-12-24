@@ -4,7 +4,10 @@ const bodyParser = require('body-parser');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const User = require("./createDB");
+// const User = require("./createDB");
+const User = require('../models/User');
+const Task = require('../models/Task');
+const Project = require('../models/Project');
 
 const app = express();
 const PORT = 1634;
@@ -180,6 +183,28 @@ app.get('/users/:id/activity', async (req, res) => {
         res.json({ activityHistory: user.activityHistory });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Create a project
+router.post('/projects', async (req, res) => {
+    const { name, description, tasks, createdBy } = req.body;
+    const project = new Project({ name, description, tasks, createdBy });
+    try {
+        await project.save();
+        res.status(201).json({ message: 'Project created successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Get all projects
+router.get('/projects', async (req, res) => {
+    try {
+        const projects = await Project.find().populate('tasks').populate('createdBy');
+        res.json(projects);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 });
 
