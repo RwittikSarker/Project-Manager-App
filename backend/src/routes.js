@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const cors = require('cors');
 
 const User = require("./model/User");
+const Project = require("./model/Project");
 const createAdminIfNotExist = require("./controller/createAdminIfNotExist");
 
 const app = express();
@@ -51,7 +52,6 @@ function checkAdmin(req, res, next) {
 
 // Sign-Up API
 app.post("/signup", async (req, res) => {
-    console.log(req.body);
     const { firstname, lastname, username, email, password } = req.body;
     if (!firstname || !lastname || !username || !email || !password) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -72,7 +72,7 @@ app.post("/login", async (req, res) => {
     if (!email || !password) {
         return res.status(400).json({ error: "Missing email or password" });
     }
-    const user = users.find(user => user.email === email);
+    const user = await User.findOne({ email: email });
     if (!user) {
         return res.status(401).json({ error: "Invalid email or password" });
     }
@@ -80,83 +80,165 @@ app.post("/login", async (req, res) => {
     if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid email or password" });
     }
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "1h" });
-    res.json({ message: "Login successful", access_token: token });
+    res.json({ message: "Login successful", userId: user.id });
 });
+
+// View Project API
+app.get("/user/:id/projects", async (req, res) => {
+    const userId = req.params.id;
+
+    try {
+        // Fetch user by ID and populate the Projects array
+        const user = await User.findById(userId).populate("projects"); // Assuming `Projects` holds ObjectIds referencing the `Project` model
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if the user has projects
+        const projects = user.projects || [];
+        if (projects.length === 0) {
+            return res.status(200).json({ message: "No Projects", projects: projects });
+        }
+
+        // Return the populated projects
+        res.status(200).json({ projects: projects });
+    } catch (error) {
+        console.error("Error fetching user projects:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Add Project API
+app.post("/user/:id/projects/add", async (req, res) => {
+    const { name } = req.body;
+    const userId = req.params.id;
+
+    if (!name) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+        // Create a new project
+        const newProject = new Project({ name });
+        const savedProject = await newProject.save();
+
+        // Update the user's projects array
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $push: { projects: savedProject._id } },
+            { new: true } // Return the updated user document
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(201).json({ message: "Project added successfully", project: savedProject });
+    } catch (error) {
+        console.error("Error adding project:", error);
+        res.status(500).json({ error: "An error occurred while adding the project" });
+    }
+});
+
+
+// Admin View API
+app.get("/admin/users", async (req, res) => {
+    try {
+        const users = await User.find({})
+            .populate("projects", "name")
+            .select("firstname lastname username email role permissions activityHistory projects"); // Select relevant fields
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ error: "An error occurred while fetching users" });
+    }
+});
+
 
 // View Profile API
-app.get("/profile", (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-    const token = authHeader.split(" ")[1];
+app.get("/user/:id", async (req, res) => {
+    const userId = req.params.id;
+
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = users.find(u => u.id === decoded.userId);
+        const user = await User.findById(userId).populate("projects", "name description");
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        res.json({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            profilePicture: user.profilePicture || "No picture uploaded",
-        });
-    } catch (err) {
-        res.status(401).json({ error: "Invalid token" });
+        res.status(200).json(user);
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        res.status(500).json({ error: "An error occurred while fetching the user profile" });
     }
 });
 
-// Update Profile API
-app.put("/profile", (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-    const token = authHeader.split(" ")[1];
+// Edit Profile API
+app.put("/user/:id", async (req, res) => {
+    const { id } = req.params;
+    const { firstname, lastname, email } = req.body;
+
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = users.find(u => u.id === decoded.userId);
+        const user = await User.findByIdAndUpdate(
+            id,
+            { firstname, lastname, email },
+            { new: true } // Return the updated document
+        );
+
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        const { name, email, profilePicture } = req.body;
-        if (name) user.name = name;
-        if (email) user.email = email;
-        if (profilePicture) user.profilePicture = profilePicture;
-        res.json({ message: "Profile updated successfully", user });
-    } catch (err) {
-        res.status(401).json({ error: "Invalid token" });
+
+        res.status(200).json(user);
+    } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).json({ error: "An error occurred while updating the user" });
+    }
+});
+
+// Change Password API
+app.put("/user/:id/pass", async (req, res) => {
+    const { id } = req.params;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    try {
+        // Validate inputs
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ error: "All fields are required" });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ error: "New passwords do not match" });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters long" });
+        }
+
+        // Find the user
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Verify old password
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: "Old password is incorrect" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+        console.error("Error updating password:", error);
+        res.status(500).json({ error: "An error occurred while updating the password" });
     }
 });
 
 
-app.put("/change-password", async (req, res) => {
-    console.log("Change Password route called"); // Debug line
-    const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-});
-
-
-// Add admin
-app.get('/users/add-admin', (req, res) => {
-    const user = new User({
-        username: "admin",
-        password: "1234",
-        role: "admin",
-        permissions: "admin"
-    });
-    user.save()
-        .then((res) => { res.send(result) })
-        .catch((err) => { console.log(err) });
-})
 
 // Admins can edit user roles and permissions to ensure proper access control.
-app.put('/users/:id', checkAdmin, async (req, res) => {
+app.put('/users/:id/admin', checkAdmin, async (req, res) => {
     const { id } = req.params;
     const { role, permissions } = req.body;
 

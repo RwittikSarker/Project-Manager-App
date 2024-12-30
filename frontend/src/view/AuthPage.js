@@ -69,12 +69,16 @@ const AuthPage = () => {
       if (response.ok) {
         const data = await response.json();
         console.log(`${isSignUp ? "Sign up" : "Log in"} successful`, data);
-        // Navigate to the desired page after success
-        history.push("/projects");
+        if (formData.email === "admin@example.com") {
+          history.push("/adminview");
+        }
+        else{
+          history.push("/projects", { userId: data.userId });
+        }
       } else {
         const errorData = await response.json();
-        console.error("Error:", errorData.message);
-        alert(errorData.message || "Something went wrong. Please try again.");
+        console.error("Error:", errorData.error);
+        alert(errorData.error );
       }
     } catch (error) {
       console.error("Error:", error);

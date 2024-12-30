@@ -1,3 +1,4 @@
+const bcrypt = require("bcryptjs");
 const User = require("../model/User");
 const createAdminIfNotExist = async function createAdminIfNotExist() {
     try {
@@ -7,13 +8,15 @@ const createAdminIfNotExist = async function createAdminIfNotExist() {
         console.log('Admin already exists, skipping creation.');
         return;
       }
+
+      const hashedPassword = await bcrypt.hash("adminpassword", 10);
   
       const admin = new User({
         firstname: "Rwittik",
         lastname: "Sarker",
         username: 'admin',
         email: 'admin@example.com',
-        password: "adminpassword",
+        password: hashedPassword,
         role: 'admin',
       });
   

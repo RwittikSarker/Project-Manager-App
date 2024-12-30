@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   permissions: { type: [String], default: ["createProject","deleteProject","createTask","deleteTask"] },
   activityHistory: { type: [String], default: [] },
-  projects: { default: []}
+  projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Project", default: [] }]
 });
 
 const User = mongoose.model('User', userSchema);
