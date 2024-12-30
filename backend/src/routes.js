@@ -4,20 +4,32 @@ const bodyParser = require('body-parser');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const User = require("./createDB");
+const cors = require('cors');
+
+const User = require("./model/User");
+const createAdminIfNotExist = require("./controller/createAdminIfNotExist");
 
 const app = express();
 const PORT = 1634;
 
+app.use(cors());
+
 // Connect to database
-mongoose.connect('mongodb://localhost:27017/PMADBmain')
-    .then((result) => app.listen(PORT, () => { console.log(`Server running on port ${PORT}`); }));
+mongoose.connect('mongodb://127.0.0.1:27017/PMADBmain', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log('Successfully connected to MongoDB!');
+        createAdminIfNotExist();
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:1634`);
+        });
+    })
+    .catch((err) => {
+        console.error('Error connecting to MongoDB:', err);
+    });
+
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () {
-    console.log('Connected to MongoDB!');
-});
 
 app.use(bodyParser.json());
 
@@ -39,17 +51,18 @@ function checkAdmin(req, res, next) {
 
 // Sign-Up API
 app.post("/signup", async (req, res) => {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    console.log(req.body);
+    const { firstname, lastname, username, email, password } = req.body;
+    if (!firstname || !lastname || !username || !email || !password) {
         return res.status(400).json({ error: "Missing required fields" });
     }
-    const userExists = users.find(user => user.email === email);
+    const userExists = await User.findOne({ email: email });
     if (userExists) {
         return res.status(400).json({ error: "Email already exists" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = { id: users.length + 1, name, email, password: hashedPassword };
-    users.push(newUser);
+    const newUser = new User({ firstname, lastname, username, email, password: hashedPassword });
+    await newUser.save();
     res.status(201).json({ message: "User created successfully" });
 });
 
@@ -182,7 +195,6 @@ app.get('/users/:id/activity', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
