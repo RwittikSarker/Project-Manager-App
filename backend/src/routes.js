@@ -278,5 +278,147 @@ app.get('/users/:id/activity', async (req, res) => {
     }
 });
 
+// Update the priority level of a task
+app.put("/tasks/:taskId/priority", async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        const { priority } = req.body;
+
+
+        // Validate priority level
+        const validPriorities = ["low", "medium", "high"];
+        if (!validPriorities.includes(priority)) {
+            return res.status(400).json({ message: "Invalid priority level" });
+        }
+
+
+        // Find and update the task
+        const task = await Task.findByIdAndUpdate(
+            taskId,
+            { priority },
+            { new: true }
+        );
+
+
+        if (!task) return res.status(404).json({ message: "Task not found" });
+
+
+        res.status(200).json({ message: "Priority updated successfully", task });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+// View dashboard with user's tasks and projects
+app.get("/dashboard", async (req, res) => {
+    try {
+        const userId = req.user?.userId; // Ensure req.user is set by authMiddleware
+
+
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+
+        // Fetch user's projects and tasks
+        const projects = await Project.find({ createdBy: userId });
+        const tasks = await Task.find({ createdBy: userId });
+
+
+        res.status(200).json({
+            message: "Dashboard data retrieved successfully",
+            projects,
+            tasks,
+        });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+// Get notifications for the user
+app.get("/notifications", async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+
+
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+
+        // Fetch notifications (example: tasks due soon)
+        const notifications = await Task.find({
+            createdBy: userId,
+            dueDate: { $lte: new Date(new Date().setDate(new Date().getDate() + 2)) }, // Tasks due in the next 2 days
+        });
+
+
+        res.status(200).json({
+            message: "Notifications retrieved successfully",
+            notifications,
+        });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+
+
+// Search for tasks by title or description
+app.get("/tasks/search", async (req, res) => {
+    try {
+        const { query } = req.query;
+
+
+        if (!query) {
+            return res.status(400).json({ message: "Search query is required" });
+        }
+
+
+        const tasks = await Task.find({
+            $or: [
+                { title: { $regex: query, $options: "i" } },
+                { description: { $regex: query, $options: "i" } },
+            ],
+        });
+
+
+        res.status(200).json({ message: "Search results", tasks });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+
+
+// Filter tasks by status, priority, or due date
+app.get("/tasks/filter", async (req, res) => {
+    try {
+        const { status, priority, dueDate } = req.query;
+
+
+        const filter = {};
+        if (status) filter.status = status;
+        if (priority) filter.priority = priority;
+        if (dueDate) filter.dueDate = { $lte: new Date(dueDate) };
+
+
+        const tasks = await Task.find(filter);
+
+
+        res.status(200).json({ message: "Filtered tasks retrieved successfully", tasks });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
