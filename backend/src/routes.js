@@ -8,6 +8,7 @@ const cors = require('cors');
 
 const User = require("./model/User");
 const Project = require("./model/Project");
+const Task = require("./model/Task");
 const createAdminIfNotExist = require("./controller/createAdminIfNotExist");
 
 const app = express();
@@ -234,7 +235,66 @@ app.put("/user/:id/pass", async (req, res) => {
     }
 });
 
+// View task page
+app.get("/projects/:projectId/tasks", async (req, res) => {
+    const { projectId } = req.params;
 
+    try {
+        const project = await Project.findById(projectId).populate("tasks");
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+        res.status(200).json({ tasks: project.tasks });
+    } catch (error) {
+        console.error("Error fetching tasks:", error);
+        res.status(500).json({ message: "No tasks" });
+    }
+});
+
+// Add task
+app.post("/projects/:projectId/tasks/add", async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { title, description, prioritylevel, dueDate } = req.body;
+
+        // Validate input
+        if (!req.body) {
+            console.log(title);
+            return res.status(400).json({ error: "Title, priority level, and due date are required." });
+        }
+
+        // Find the project
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ error: "Project not found." });
+        }
+        console.log("eije ami" + prioritylevel);
+
+        // Create the task
+        const task = new Task({
+            title: title,
+            description: description || "", // Default empty description
+            priorityLevel: prioritylevel,
+            dueDate: new Date(dueDate), // Ensure dueDate is a Date object
+            status: "Pending", // Default status
+        });
+
+        // Save the task to the Task collection
+        const savedTask = await task.save();
+
+        // Add the task reference to the project's tasks array
+        project.tasks.push(savedTask._id);
+        await project.save();
+
+        res.status(201).json({
+            message: "Task added successfully.",
+            task: savedTask,
+        });
+    } catch (error) {
+        console.error("Error adding task:", error);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
 
 
 // Admins can edit user roles and permissions to ensure proper access control.

@@ -40,8 +40,8 @@ const ProjectsPage = () => {
     }, [userId]);
 
     // Navigate to the tasks page for a specific project
-    const handleProjectClick = (projectId) => {
-        history.push(`/projects/${projectId}/tasks`);
+    const handleProjectClick = (projectId, userId) => {
+        history.push("/tasks", { projectId: projectId , userID: userId});
     };
 
     // Filter projects based on the search term

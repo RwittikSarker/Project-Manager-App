@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useHistory } from "react-router-dom"; // useHistory in v5
+import { useHistory } from "react-router-dom";
 import "./LandingPage.css";
 
 const LandingPage = () => {
@@ -28,7 +28,6 @@ const LandingPage = () => {
           </a>
         </nav>
         <div className="navbar-buttons">
-          {/* Using history.push() for navigation */}
           <button onClick={() => history.push("/login")}>Login</button>
           <button className="signup-btn" onClick={() => history.push("/signup")}>
             Sign Up
@@ -56,7 +55,7 @@ const LandingPage = () => {
           </div>
   
           <div className="illustration">
-            <img src={require('./resources/illustration-placeholder.png')} alt="illustration"/>
+            <img src={require('../resources/illustration-placeholder.png')} alt="illustration"/>
           </div>
         </main>
         {showAboutPopup && (
