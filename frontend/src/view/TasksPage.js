@@ -7,11 +7,12 @@ const TasksPage = () => {
     const [tasks, setTasks] = useState([]);
     const [message, setMessage] = useState("");
     const [selectedPriority, setSelectedPriority] = useState("All");
+    const [editingTaskId, setEditingTaskId] = useState(null);
+    const [updatedStatus, setUpdatedStatus] = useState("");
     const history = useHistory();
     const location = useLocation();
     const { projectId, userId } = location.state;
 
-    // Fetch tasks for the selected project
     useEffect(() => {
         const fetchTasks = async () => {
             try {
@@ -39,12 +40,36 @@ const TasksPage = () => {
         }
     }, [projectId]);
 
-    // Navigate to the add task page
     const handleAddTask = () => {
         history.push(`/addtaskpage`, { projectId, userId });
     };
 
-    // Filter tasks based on the selected priority level
+    const handleStatusUpdate = async (taskId) => {
+        try {
+            const response = await fetch(`http://localhost:1634/projects/${projectId}/tasks/${taskId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: updatedStatus }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to update status");
+            }
+
+            const updatedTask = await response.json();
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task._id === updatedTask._id ? { ...task, status: updatedTask.status } : task
+                )
+            );
+            setEditingTaskId(null);
+        } catch (error) {
+            console.error("Error updating task status:", error);
+            setMessage("Failed to update status.");
+        }
+    };
+
     const filteredTasks = selectedPriority === "All"
         ? tasks
         : tasks.filter(task => task.priorityLevel === selectedPriority);
@@ -100,7 +125,26 @@ const TasksPage = () => {
                                 <td>{task.description}</td>
                                 <td>{new Date(task.dueDate).toLocaleDateString()}</td>
                                 <td>{task.priorityLevel}</td>
-                                <td>{task.status}</td>
+                                <td>
+                                    {editingTaskId === task._id ? (
+                                        <select
+                                            value={updatedStatus}
+                                            onChange={(e) => setUpdatedStatus(e.target.value)}
+                                            onBlur={() => handleStatusUpdate(task._id)}
+                                        >
+                                            <option value="Pending">Pending</option>
+                                            <option value="OnGoing">OnGoing</option>
+                                            <option value="Completed">Completed</option>
+                                        </select>
+                                    ) : (
+                                        <span onClick={() => {
+                                            setEditingTaskId(task._id);
+                                            setUpdatedStatus(task.status);
+                                        }}>
+                                            {task.status}
+                                        </span>
+                                    )}
+                                </td>
                             </tr>
                         ))
                     ) : (

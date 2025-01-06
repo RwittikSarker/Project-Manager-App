@@ -2,7 +2,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require('body-parser');
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
 const cors = require('cors');
 
@@ -35,11 +34,6 @@ db.on('error', console.error.bind(console, 'connection error:'));
 
 app.use(bodyParser.json());
 
-// In-memory user data
-const users = [];
-
-// JWT Secret Key
-const JWT_SECRET = "your_jwt_secret_key";
 
 
 function checkAdmin(req, res, next) {
@@ -89,19 +83,16 @@ app.get("/user/:id/projects", async (req, res) => {
     const userId = req.params.id;
 
     try {
-        // Fetch user by ID and populate the Projects array
-        const user = await User.findById(userId).populate("projects"); // Assuming `Projects` holds ObjectIds referencing the `Project` model
+        const user = await User.findById(userId).populate("projects");
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Check if the user has projects
         const projects = user.projects || [];
         if (projects.length === 0) {
             return res.status(200).json({ message: "No Projects", projects: projects });
         }
 
-        // Return the populated projects
         res.status(200).json({ projects: projects });
     } catch (error) {
         console.error("Error fetching user projects:", error);
@@ -119,15 +110,13 @@ app.post("/user/:id/projects/add", async (req, res) => {
     }
 
     try {
-        // Create a new project
         const newProject = new Project({ name });
         const savedProject = await newProject.save();
 
-        // Update the user's projects array
         const user = await User.findByIdAndUpdate(
             userId,
             { $push: { projects: savedProject._id } },
-            { new: true } // Return the updated user document
+            { new: true }
         );
 
         if (!user) {
@@ -147,7 +136,7 @@ app.get("/admin/users", async (req, res) => {
     try {
         const users = await User.find({})
             .populate("projects", "name")
-            .select("firstname lastname username email role permissions activityHistory projects"); // Select relevant fields
+            .select("firstname lastname username email role permissions activityHistory projects");
         res.status(200).json(users);
     } catch (error) {
         console.error("Error fetching users:", error);
@@ -181,7 +170,7 @@ app.put("/user/:id", async (req, res) => {
         const user = await User.findByIdAndUpdate(
             id,
             { firstname, lastname, email },
-            { new: true } // Return the updated document
+            { new: true }
         );
 
         if (!user) {
@@ -201,7 +190,6 @@ app.put("/user/:id/pass", async (req, res) => {
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
     try {
-        // Validate inputs
         if (!oldPassword || !newPassword || !confirmPassword) {
             return res.status(400).json({ error: "All fields are required" });
         }
@@ -212,13 +200,11 @@ app.put("/user/:id/pass", async (req, res) => {
             return res.status(400).json({ error: "Password must be at least 6 characters long" });
         }
 
-        // Find the user
         const user = await User.findById(id);
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Verify old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: "Old password is incorrect" });
@@ -257,32 +243,27 @@ app.post("/projects/:projectId/tasks/add", async (req, res) => {
         const { projectId } = req.params;
         const { title, description, prioritylevel, dueDate } = req.body;
 
-        // Validate input
         if (!req.body) {
             console.log(title);
             return res.status(400).json({ error: "Title, priority level, and due date are required." });
         }
 
-        // Find the project
         const project = await Project.findById(projectId);
         if (!project) {
             return res.status(404).json({ error: "Project not found." });
         }
         console.log("eije ami" + prioritylevel);
 
-        // Create the task
         const task = new Task({
             title: title,
-            description: description || "", // Default empty description
+            description: description || "",
             priorityLevel: prioritylevel,
-            dueDate: new Date(dueDate), // Ensure dueDate is a Date object
-            status: "Pending", // Default status
+            dueDate: new Date(dueDate),
+            status: "Pending",
         });
 
-        // Save the task to the Task collection
         const savedTask = await task.save();
 
-        // Add the task reference to the project's tasks array
         project.tasks.push(savedTask._id);
         await project.save();
 
@@ -296,31 +277,54 @@ app.post("/projects/:projectId/tasks/add", async (req, res) => {
     }
 });
 
-
-// Admins can edit user roles and permissions to ensure proper access control.
-app.put('/users/:id/admin', checkAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { role, permissions } = req.body;
-
-    if (!role && !permissions) {
-        return res.status(400).json({ error: 'Provide role or permissions to update.' });
-    }
+// Edit Status of task API
+app.put("/projects/:projectId/tasks/:taskId", async (req, res) => {
+    const { taskId } = req.params;
+    const { status } = req.body;
 
     try {
-        const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
+        const task = await Task.findByIdAndUpdate(
+            taskId,
+            { status },
+            { new: true }
+        );
+
+        if (!task) {
+            return res.status(404).json({ error: "Task not found" });
         }
 
-        if (role) user.role = role;
-        if (permissions) user.permissions = permissions;
-
-        await user.save();
-        res.json({ message: 'User updated successfully.', user });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(200).json(task);
+    } catch (error) {
+        console.error("Error updating task:", error);
+        res.status(500).json({ error: "An error occurred while updating the task" });
     }
 });
+
+
+
+// Admins can permissions to ensure proper access control.
+app.put("/admin/users/:userId/permissions", async (req, res) => {
+    const { userId } = req.params;
+    const { permissions } = req.body;
+
+    try {
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { permissions },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json(user);
+    } catch (error) {
+        console.error("Error updating permissions:", error);
+        res.status(500).json({ error: "An error occurred while updating permissions" });
+    }
+});
+
 
 // Users can view their activity history for a summary of recent actions.
 app.get('/users/:id/activity', async (req, res) => {

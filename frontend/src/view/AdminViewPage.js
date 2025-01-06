@@ -5,6 +5,15 @@ const AdminViewPage = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [editingUserId, setEditingUserId] = useState(null);
+    const [updatedPermissions, setUpdatedPermissions] = useState([]);
+
+    const defaultPermissions = [
+        "createProject",
+        "deleteProject",
+        "createTask",
+        "deleteTask",
+    ];
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -24,6 +33,44 @@ const AdminViewPage = () => {
 
         fetchUsers();
     }, []);
+
+    const handleEditPermissions = (userId, permissions) => {
+        setEditingUserId(userId);
+        setUpdatedPermissions([...permissions]);
+    };
+
+    const handlePermissionChange = (permission) => {
+        setUpdatedPermissions((prev) =>
+            prev.includes(permission)
+                ? prev.filter((perm) => perm !== permission)
+                : [...prev, permission]
+        );
+    };
+
+    const savePermissions = async (userId) => {
+        try {
+            const response = await fetch(`http://localhost:1634/admin/users/${userId}/permissions`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ permissions: updatedPermissions }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update permissions");
+            }
+
+            const updatedUser = await response.json();
+            setUsers((prevUsers) =>
+                prevUsers.map((user) =>
+                    user._id === userId ? { ...user, permissions: updatedUser.permissions } : user
+                )
+            );
+            setEditingUserId(null);
+        } catch (err) {
+            console.error("Error updating permissions:", err);
+            setError("Failed to update permissions.");
+        }
+    };
 
     return (
         <div className="admin-view-page">
@@ -61,9 +108,39 @@ const AdminViewPage = () => {
                                     <td>{user.email}</td>
                                     <td>{user.role}</td>
                                     <td>
-                                        {user.permissions.length > 0
-                                            ? user.permissions.join(", ")
-                                            : "No Permissions"}
+                                        {editingUserId === user._id ? (
+                                            <div>
+                                                {defaultPermissions.map((permission) => (
+                                                    <label key={permission} className="permission-checkbox">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={updatedPermissions.includes(permission)}
+                                                            onChange={() =>
+                                                                handlePermissionChange(permission)
+                                                            }
+                                                        />
+                                                        {permission}
+                                                    </label>
+                                                ))}
+                                                <button
+                                                    className="save-btn"
+                                                    onClick={() => savePermissions(user._id)}
+                                                >
+                                                    Save
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span
+                                                onClick={() =>
+                                                    handleEditPermissions(user._id, user.permissions)
+                                                }
+                                                className="editable-permissions"
+                                            >
+                                                {user.permissions.length > 0
+                                                    ? user.permissions.join(", ")
+                                                    : "No Permissions"}
+                                            </span>
+                                        )}
                                     </td>
                                     <td>
                                         {user.activityHistory.length > 0
