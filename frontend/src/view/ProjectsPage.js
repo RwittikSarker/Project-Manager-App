@@ -11,7 +11,6 @@ const ProjectsPage = () => {
     const location = useLocation();
     const userId = location.state.userId;
 
-    // Fetch user's projects upon loading the page
     useEffect(() => {
         const fetchProjects = async () => {
             try {
@@ -39,12 +38,10 @@ const ProjectsPage = () => {
         }
     }, [userId]);
 
-    // Navigate to the tasks page for a specific project
     const handleProjectClick = (projectId, userId) => {
         history.push("/tasks", { projectId: projectId , userID: userId});
     };
 
-    // Filter projects based on the search term
     const filteredProjects = projects.filter(project =>
         project.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -59,7 +56,7 @@ const ProjectsPage = () => {
                 </div>
                 <div className="navbar-actions">
                     <a href="#dashboard">Dashboard</a>
-                    <button className="logout-btn">Log Out</button>
+                    <button className="logout-btn" onClick={() => history.push("/logout")}>Log Out</button>
                 </div>
             </header>
             <div className="projects-header">

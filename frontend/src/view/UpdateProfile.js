@@ -21,7 +21,7 @@ const EditProfilePage = () => {
                     <h2>Rwittik Sarker</h2>
                     <div className="button-group">
                         <button className="edit-profile-btn">Edit Profile</button>
-                        <button className="logout-btn">Logout</button>
+                        <button className="logout-btn" onClick={() => history.push("/logout")}>Logout</button>
                     </div>
                 </aside>
 

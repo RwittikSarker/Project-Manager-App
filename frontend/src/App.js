@@ -24,6 +24,7 @@ const App = () => {
         <Route path="/changepassword" component={ChangePassword} />
         <Route exact path="/tasks" component={TasksPage} />
         <Route exact path="/addtaskpage" component={AddTaskPage} />
+        <Route exact path="/logout" component={LandingPage} />
       </Switch>
     </Router>
   );

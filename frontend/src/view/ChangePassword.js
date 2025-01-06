@@ -14,7 +14,7 @@ const ChangePassword = () => {
     const [success, setSuccess] = useState(null);
 
     const handleSave = async (e) => {
-        e.preventDefault(); // Prevent page reload
+        e.preventDefault();
         setError(null);
         setSuccess(null);
 

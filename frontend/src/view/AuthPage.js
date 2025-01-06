@@ -6,10 +6,8 @@ const AuthPage = () => {
   const location = useLocation();
   const history = useHistory();
 
-  // Determine the mode based on the pathname
   const isSignUp = location.pathname === "/signup";
 
-  // State to manage form inputs
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,13 +16,11 @@ const AuthPage = () => {
     password: "",
   });
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     var endpoint = "";
@@ -110,7 +106,6 @@ const AuthPage = () => {
           </button>
         </div>
 
-        {/* Render the appropriate form based on the mode */}
         <div className="form-container">
           <h2>{isSignUp ? "Sign up" : "Log in"}</h2>
           <form onSubmit={handleSubmit}>

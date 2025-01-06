@@ -56,7 +56,7 @@ const AddProjectPage = () => {
                 </div>
                 <div className="navbar-actions">
                     <a href="#dashboard">Dashboard</a>
-                    <button className="logout-btn">Log Out</button>
+                    <button className="logout-btn" onClick={() => history.push("/logout")}>Log Out</button>
                 </div>
             </header>
             <div className="header-bar">
